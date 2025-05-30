@@ -1,4 +1,4 @@
-name: NuGet by Microsoft
+name: NuGet Push
 
 on:
   workflow_call:
@@ -17,16 +17,21 @@ on:
         required: false
         type: string
         default: 'Release'
-      level:
+      source:
+        description: The NuGet source to push the packages to. Default is https://api.nuget.org/v3/index.json.
+        required: false
+        type: string
+        default: 'https://api.nuget.org/v3/index.json'
+      download-build-artifact-name:
+        description: The name to download the build artifacts. Default, when left empty, is 'format('NuGet-{0}', inputs.configuration)'.
+        required: false
+        type: string
+        default: ''
+      verbosity-level:
         description: Sets the verbosity level of the command. Allowed values are quiet, normal and detailed. The default is quiet.
         required: false
         type: string
         default: 'quiet'
-      downloadBuildArtifactName:
-        description: The name of the downloaded build artifact. Default, when left empty, is 'format('NuGet-{0}', inputs.configuration)'.
-        required: false
-        type: string
-        default: ''
       timeout-minutes:
         description: The maximum time in minutes to allow the job to run. Default is 15 minutes.
         required: false
@@ -43,25 +48,30 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - name: Add the Mono repository
-        run: |
-          sudo apt install ca-certificates gnupg
-          sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-          echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-          sudo apt update
-        shell: bash
+      - name: Install Mono SDK
+        uses: codebeltnet/install-mono@v1
 
-      - name: Install Mono
-        run: |
-          sudo apt install mono-devel
-        shell: bash
-
-      - uses: codebeltnet/nuget-push@v1
+      - name: Install NuGet CLI
+        uses: codebeltnet/install-nuget@v1
         with:
           token: ${{ secrets.NUGET_TOKEN }}
-          configuration: ${{ inputs.configuration }}
-          level: ${{ inputs.level }}
-          downloadBuildArtifactName: ${{ inputs.downloadBuildArtifactName }}
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.download-build-artifact-name != '' && inputs.download-build-artifact-name || format('NuGet-{0}', inputs.configuration) }}
+
+      - name: List Build Artifacts
+        run: |
+          pwd
+          ls -R
+        shell: bash
+
+      - name: Push NuGet Packages
+        uses: codebeltnet/nuget-push@v2
+        with:
+          source: ${{ inputs.source }}
+          verbosity-level: ${{ inputs.verbosity-level }}
 
   deploy_environment:
     if: ${{ inputs.environment != '' }}
@@ -70,22 +80,27 @@ jobs:
     timeout-minutes: ${{ inputs.timeout-minutes }}
     environment: ${{ inputs.environment }}
     steps:
-      - name: Add the Mono repository
-        run: |
-          sudo apt install ca-certificates gnupg
-          sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-          echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-          sudo apt update
-        shell: bash
+      - name: Install Mono SDK
+        uses: codebeltnet/install-mono@v1
 
-      - name: Install Mono
-        run: |
-          sudo apt install mono-devel
-        shell: bash
-
-      - uses: codebeltnet/nuget-push@v1
+      - name: Install NuGet CLI
+        uses: codebeltnet/install-nuget@v1
         with:
           token: ${{ secrets.NUGET_TOKEN }}
-          configuration: ${{ inputs.configuration }}
-          level: ${{ inputs.level }}
-          downloadBuildArtifactName: ${{ inputs.downloadBuildArtifactName }}
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.download-build-artifact-name != '' && inputs.download-build-artifact-name || format('NuGet-{0}', inputs.configuration) }}
+
+      - name: List Build Artifacts
+        run: |
+          pwd
+          ls -R
+        shell: bash
+
+      - name: Push NuGet Packages
+        uses: codebeltnet/nuget-push@v2
+        with:
+          source: ${{ inputs.source }}
+          verbosity-level: ${{ inputs.verbosity-level }}
