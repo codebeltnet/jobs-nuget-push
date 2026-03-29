@@ -48,14 +48,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - name: Install Mono SDK
-        uses: codebeltnet/install-mono@v1
-
-      - name: Install NuGet CLI
-        uses: codebeltnet/install-nuget@v1
-        with:
-          token: ${{ secrets.NUGET_TOKEN }}
-
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -68,10 +60,8 @@ jobs:
         shell: bash
 
       - name: Push NuGet Packages
-        uses: codebeltnet/nuget-push@v2
-        with:
-          source: ${{ inputs.source }}
-          verbosity-level: ${{ inputs.verbosity-level }}
+        run: dotnet nuget push '${{ github.workspace }}/*.nupkg' --source ${{ inputs.source }} --api-key ${{ secrets.NUGET_TOKEN }} --skip-duplicate --verbosity ${{ inputs.verbosity-level }}
+        shell: bash
 
   deploy_environment:
     if: ${{ inputs.environment != '' }}
@@ -80,14 +70,6 @@ jobs:
     timeout-minutes: ${{ inputs.timeout-minutes }}
     environment: ${{ inputs.environment }}
     steps:
-      - name: Install Mono SDK
-        uses: codebeltnet/install-mono@v1
-
-      - name: Install NuGet CLI
-        uses: codebeltnet/install-nuget@v1
-        with:
-          token: ${{ secrets.NUGET_TOKEN }}
-
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -100,7 +82,5 @@ jobs:
         shell: bash
 
       - name: Push NuGet Packages
-        uses: codebeltnet/nuget-push@v2
-        with:
-          source: ${{ inputs.source }}
-          verbosity-level: ${{ inputs.verbosity-level }}
+        run: dotnet nuget push '${{ github.workspace }}/*.nupkg' --source ${{ inputs.source }} --api-key ${{ secrets.NUGET_TOKEN }} --skip-duplicate --verbosity ${{ inputs.verbosity-level }}
+        shell: bash
