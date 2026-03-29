@@ -27,11 +27,6 @@ on:
         required: false
         type: string
         default: ''
-      verbosity-level:
-        description: Sets the verbosity level of the command. Allowed values are quiet, normal and detailed. The default is quiet.
-        required: false
-        type: string
-        default: 'quiet'
       timeout-minutes:
         description: The maximum time in minutes to allow the job to run. Default is 15 minutes.
         required: false
@@ -60,7 +55,7 @@ jobs:
         shell: bash
 
       - name: Push NuGet Packages
-        run: dotnet nuget push '${{ github.workspace }}/*.nupkg' --source ${{ inputs.source }} --api-key ${{ secrets.NUGET_TOKEN }} --skip-duplicate --verbosity ${{ inputs.verbosity-level }}
+        run: dotnet nuget push '${{ github.workspace }}/*.nupkg' --source ${{ inputs.source }} --api-key ${{ secrets.NUGET_TOKEN }} --skip-duplicate
         shell: bash
 
   deploy_environment:
@@ -82,5 +77,5 @@ jobs:
         shell: bash
 
       - name: Push NuGet Packages
-        run: dotnet nuget push '${{ github.workspace }}/*.nupkg' --source ${{ inputs.source }} --api-key ${{ secrets.NUGET_TOKEN }} --skip-duplicate --verbosity ${{ inputs.verbosity-level }}
+        run: dotnet nuget push '${{ github.workspace }}/*.nupkg' --source ${{ inputs.source }} --api-key ${{ secrets.NUGET_TOKEN }} --skip-duplicate
         shell: bash
